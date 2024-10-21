@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Autoridad</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="module" src="logAutoridad.js" defer></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 3em;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                color: #000;
+            }
+            50% {
+                color: #00A86B;
+            }
+            100% {
+                color: #000;
+            }
+        }
+
+        input[type="password"] {
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 1.2em;
+            width: 80%;
+            text-align: center; /* Centrar texto dentro del input */
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #00A86B;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px; /* Espacio entre el botón y el input */
+        }
+
+        #notification {
+            color: red;
+            margin-top: 10px; /* Espacio entre la notificación y otros elementos */
+        }
+    </style>
+</head>
+<body>
+    <h1>ChichicAPPa</h1>
+    <div>
+        <p>Inserte su clave:</p>
+        <input type="password" id="clave" required placeholder="Clave de autoridad">
+        <button id="loginButton">Iniciar Sesión</button>
+    </div>
+    <div id="notification" style="display: none;"></div>
+</body>
+</html>
+
+
+
+

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChichicAPPa - Reportar Deslave</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        .title {
+            font-size: 3em;
+            animation: pulse 2s infinite;
+            margin-top: 20px;
+        }
+
+        @keyframes pulse {
+            0% {
+                color: #000;
+            }
+            50% {
+                color: #00A86B;
+            }
+            100% {
+                color: #000;
+            }
+        }
+
+        #notification-icon {
+            position: absolute; /* Posición absoluta para colocarlo en la parte superior */
+            top: 20px; /* Ajusta la posición vertical */
+            right: 20px; /* Ajusta la posición horizontal */
+            font-size: 2em; /* Tamaño del ícono */
+            cursor: pointer; /* Cambia el cursor al pasar sobre el ícono */
+        }
+
+        #map {
+            height: 400px;
+            width: 80%;
+            margin: 20px auto;
+        }
+
+        #submit-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #00A86B;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            display: none;
+        }
+
+        #submit-button:disabled {
+            background-color: grey;
+            cursor: not-allowed;
+        }
+
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 class="title">ChichicAPPa</h1>
+
+    <!-- Icono de campana para notificaciones -->
+    <div id="notification-icon" onclick="showNotifications()">🔔</div>
+
+    <div id="map"></div>
+
+    <div class="container">
+        <form id="deslave-form">
+            <label for="description">Descripción del deslave:</label>
+            <textarea id="description" required></textarea>
+            
+            <label for="file">Adjuntar foto:</label>
+            <input type="file" id="file" accept="image/*" required>
+
+            <button id="submit-button" type="submit" disabled>Enviar</button>
+        </form>
+    </div>
+
+    <!-- Leaflet.js -->
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script type="module">
+        // Importar Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, collection } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeMAAiVchEmkAqdRqFTSJSh4CmfOLUPHg",
+            authDomain: "chichicapa-930cb.firebaseapp.com",
+            projectId: "chichicapa-930cb",
+            storageBucket: "chichicapa-930cb.appspot.com",
+            messagingSenderId: "1042962898203",
+            appId: "1:1042962898203:web:c50fd58eaa78ae1f4547be",
+            measurementId: "G-8Y1JCPZVJW"
+        };
+
+        // Inicializar la aplicación Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app); // Obtener Firestore
+        const storage = getStorage(app); // Obtener Storage
+        const auth = getAuth(app); // Obtener Auth
+
+        const descriptionInput = document.getElementById('description');
+        const fileInput = document.getElementById('file');
+        const submitButton = document.getElementById('submit-button');
+        let selectedCoordinates = null;
+
+        // Inicializar el mapa en Chichicapa, Ajalpan, Puebla
+        const map = L.map('map').setView([18.40056, -97.04694], 16);
+        let marker;
+
+        L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains: ['0', '1', '2', '3'],
+            attribution: '© Google'
+        }).addTo(map);
+
+        map.on('click', (e) => {
+            const { lat, lng } = e.latlng;
+            selectedCoordinates = { lat, lng }; // Guardar las coordenadas seleccionadas
+            if (marker) {
+                marker.setLatLng([lat, lng]);
+            } else {
+                marker = L.marker([lat, lng]).addTo(map);
+            }
+
+            checkInputs(); // Habilitar el botón si todo está completo
+        });
+
+        function checkInputs() {
+            submitButton.disabled = !(descriptionInput.value && fileInput.files.length > 0 && selectedCoordinates);
+            submitButton.style.display = 'inline-block'; // Mostrar el botón
+        }
+
+        descriptionInput.addEventListener('input', checkInputs);
+        fileInput.addEventListener('change', checkInputs);
+
+        // Manejar el envío del formulario
+        document.getElementById('deslave-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const file = fileInput.files[0];
+            const description = descriptionInput.value;
+            const user = auth.currentUser; // Usar la instancia de Auth inicializada
+
+            if (user && selectedCoordinates) {
+                try {
+                    const reportId = doc(collection(db, "deslaves")).id;
+
+                    // Subir la imagen
+                    const storageRef = ref(storage, `deslaves/${reportId}-${file.name}`);
+                    await uploadBytes(storageRef, file);
+                    const imageUrl = await getDownloadURL(storageRef);
+
+                    // Guardar los datos en Firestore
+                    await setDoc(doc(db, "deslaves", reportId), {
+                        userId: user.uid,
+                        description: description,
+                        imageUrl: imageUrl,
+                        coordinates: selectedCoordinates, // Incluir las coordenadas
+                        timestamp: new Date()
+                    });
+
+                    alert('Deslave reportado con éxito.');
+                    descriptionInput.value = '';
+                    fileInput.value = '';
+                    selectedCoordinates = null;
+                    submitButton.disabled = true;
+
+                } catch (error) {
+                    console.error('Error al subir la imagen o la descripción:', error);
+                    alert('Error al enviar el reporte.');
+                }
+            } else {
+                alert('Debes estar autenticado y seleccionar un punto en el mapa para enviar un reporte.');
+            }
+        });
+
+        // Función para manejar clic en el icono de notificaciones
+        function showNotifications() {
+            alert('Aquí se mostrarán tus notificaciones.');
+            // Aquí puedes agregar más lógica para mostrar notificaciones
+        }
+    </script>
+</body>
+</html>

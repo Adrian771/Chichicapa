@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            font-size: 3em;
+            animation: fadeIn 2s;
+            margin-top: 20px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 80%;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        button {
+            padding: 5px 10px;
+            background-color: #28a745; /* Verde */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #218838; /* Verde más oscuro */
+        }
+
+        #map {
+            height: 300px; /* Altura del mapa */
+            margin: 20px auto;
+            width: 80%; /* Ancho del mapa */
+        }
+
+        .coord-input {
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>ChichicAPPa</h1>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Descripción del Deslave</th>
+                <th>Imagen</th>
+                <th>Ubicación</th>
+                <th>Fecha</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody id="reportesBody">
+            <!-- Aquí se agregarán los reportes mediante JavaScript -->
+        </tbody>
+    </table>
+
+    <!-- Contenedor para el mapa -->
+    <div id="map"></div>
+
+    <!-- Cuadros de texto para coordenadas y botón de buscar -->
+    <div>
+        <input type="text" id="latInput" class="coord-input" placeholder="Latitud">
+        <input type="text" id="lngInput" class="coord-input" placeholder="Longitud">
+        <button id="buscarButton">Buscar</button>
+    </div>
+
+    <!-- JS de Leaflet -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="reportes.js" type="module"></script>
+    <script>
+        // Inicializar el mapa en Chichicapa, Ajalpan, Puebla
+        const map = L.map('map').setView([18.40056, -97.04694], 16);
+        let marker = L.marker([18.40056, -97.04694]).addTo(map); // Inicializa el marcador en la ubicación por defecto
+
+        L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains: ['0', '1', '2', '3'],
+            attribution: '© Google'
+        }).addTo(map);
+
+        // Función para buscar la ubicación por coordenadas
+        document.getElementById('buscarButton').addEventListener('click', () => {
+            const lat = parseFloat(document.getElementById('latInput').value);
+            const lng = parseFloat(document.getElementById('lngInput').value);
+
+            if (!isNaN(lat) && !isNaN(lng)) {
+                // Mueve el mapa a la nueva ubicación
+                map.setView([lat, lng], 16);
+                // Actualiza el marcador o añade uno nuevo
+                marker.setLatLng([lat, lng]);
+            } else {
+                alert('Por favor ingresa coordenadas válidas.');
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
